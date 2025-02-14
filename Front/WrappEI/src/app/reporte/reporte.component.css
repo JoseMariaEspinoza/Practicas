@@ -1,0 +1,93 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+/* Estilo para el logo */
+.logo {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 150px; 
+    height: auto;
+}
+
+/* Estilo para la imagen de fondo */
+.fondo {
+    position: absolute;
+    top: 15%;
+    left: 0;
+    width: 100%;
+    height: auto;
+    object-fit: cover; /* Mantiene la proporción */
+    z-index: -1;
+}
+
+/* Estilo para la tabla */
+table {
+    width: 40%;
+    margin: auto;
+    margin-top: 5%;
+    margin-left: 25%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+/* Asegurar que solo la primera columna se ajuste al contenido */
+td:first-child, th:first-child {
+    white-space: nowrap; /* Evita que el contenido se divida en varias líneas */
+    width: 20%; /* Deja que el contenido determine el tamaño */
+    text-align: center; /* Centra el texto */
+}
+
+/* Estilo para filas y celdas */
+tr {
+    
+}
+
+td {
+    padding: 15px;
+    vertical-align: middle;
+}
+
+/* Ajuste de las imágenes dentro de la tabla */
+td img {
+    width: 100px; /* Ajusta el tamaño cuadrado */
+    height: 100px;
+    object-fit: cover; /* Recorta la imagen manteniendo el centro */
+    border-radius: 10px;
+}
+
+/* Estilo para los títulos de las secciones */
+h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.btn-circle {
+    width: 50px; /* Tamaño del botón */
+    height: 50px; /* Tamaño del botón */
+    background-color: black; /* Fondo negro */
+    border: none;
+    border-radius: 50%; /* Hacerlo circular */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: white;
+    font-size: 24px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .btn-circle:hover {
+    background-color: #444; /* Cambio de color al pasar el ratón */
+  }
+  
+  .arrow {
+    position: relative;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 7px solid white; /* Flecha hacia la derecha */
+  }

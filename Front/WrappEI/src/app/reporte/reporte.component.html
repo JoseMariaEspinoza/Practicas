@@ -1,0 +1,28 @@
+<img src="http://espacioidea.uanaknow.com/wp-content/uploads/2024/07/cropped-logo-espacio-idea-300x131.png" alt="logo" class="logo">
+<img src="fondo.JPG" alt="fondo" class="fondo">
+
+<table>
+    <tr>
+      <td></td>
+      <td><h2>Progreso Formativo</h2></td>
+    </tr>
+    <tr *ngFor="let categoria of reporte; let i = index">
+      <td>#{{ i + 1 }}</td>
+      <td>
+        <img [src]="categoria.enlaceImagen" alt="Imagen de la categoría">
+      </td>
+      <td>
+        <h2>{{ categoria.nombreCategoria }}</h2>
+        <p>{{ categoria.porcentajeVistos | number:'1.0-0' }}% Completado, 
+          {{ categoria.videosNoVistos.length === 1 ? 'resta' : 'restan' }} {{ categoria.videosNoVistos.length }} video{{ categoria.videosNoVistos.length === 1 ? '' : 's' }}. 
+          <a href="">Ir</a>
+        </p>
+      </td>
+    </tr>
+  </table>
+  
+  <button class="btn-circle">
+    <span class="arrow">&#8594;</span>
+  </button>
+  
+  

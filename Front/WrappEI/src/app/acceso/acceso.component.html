@@ -1,0 +1,17 @@
+<img src="http://espacioidea.uanaknow.com/wp-content/uploads/2024/07/cropped-logo-espacio-idea-300x131.png" alt="logo" class="logo">
+<img src="fondo.JPG" alt="fondo" class="fondo">
+
+<div class="login-container">
+  <h2>Iniciar Sesión</h2>
+  <form (ngSubmit)="iniciarSesion()">
+    <label>Email:</label>
+    <input type="email" [(ngModel)]="email" name="email" required />
+  
+    <label>Contraseña:</label>
+    <input type="password" [(ngModel)]="contrasenia" name="contrasenia" required />
+  
+    <button type="submit">Ingresar</button>
+  </form>
+  
+  <p *ngIf="mensajeError" class="error">{{ mensajeError }}</p>
+</div>
