@@ -9,9 +9,9 @@ import java.util.List;
 @Getter
 @Setter
 public class ReporteDTO {
-    private Integer idCategoria;
+    private List<Integer> idCategoria;
     private String enlaceImagen;
-    private List<String> nombreCategoria;
+    private String nombreCategoria;
     private Double porcentajeVistos;
     private List<String> videosNoVistos;
 }

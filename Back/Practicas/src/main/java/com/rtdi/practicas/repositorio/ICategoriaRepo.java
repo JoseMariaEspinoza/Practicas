@@ -23,7 +23,7 @@ public interface ICategoriaRepo extends IGenericRepo<Categoria,Integer> {
             categoria_vistos AS (
                 SELECT
                     vc.id_categoria,
-                    ARRAY_AGG(DISTINCT vc.id_video ORDER BY vc.id_video) FILTER (WHERE h.id_video IS NOT NULL) AS videos_vistos,
+                    COALESCE(ARRAY_AGG(DISTINCT h.id_video ORDER BY h.id_video) FILTER (WHERE h.id_video IS NOT NULL), '{}'::int[]) AS videos_vistos,
                     COUNT(DISTINCT h.id_video) AS total_vistos
                 FROM video_categoria vc
                 LEFT JOIN historial h ON vc.id_video = h.id_video AND h.email = :email
@@ -34,7 +34,7 @@ public interface ICategoriaRepo extends IGenericRepo<Categoria,Integer> {
                     cat.id_categoria,
                     cat.nombre AS nombre_categoria,
                     cv.videos_categoria,
-                    COALESCE(cvist.videos_vistos, '{}'::int[]) AS videos_vistos,
+                    cvist.videos_vistos,
                     cv.total_videos,
                     COALESCE(cvist.total_vistos, 0) AS total_vistos,
                     CASE
@@ -47,73 +47,65 @@ public interface ICategoriaRepo extends IGenericRepo<Categoria,Integer> {
             ),
             categorias_agrupadas AS (
                 SELECT
-                    STRING_AGG(tc.nombre_categoria, ', ') AS nombre_categoria,
                     ARRAY_AGG(tc.id_categoria ORDER BY tc.id_categoria) AS id_categorias,
-                    tc.videos_categoria,
-                    tc.videos_vistos,
+                    STRING_AGG(tc.nombre_categoria, ', ') AS nombre_categoria,
                     tc.porcentaje_vistos,
-                    ARRAY(
-                        SELECT unnest(tc.videos_categoria)
-                        EXCEPT
-                        SELECT unnest(tc.videos_vistos)
-                    ) AS videos_no_vistos
+                    tc.videos_categoria,
+                    tc.videos_vistos
                 FROM top_categorias tc
                 GROUP BY tc.videos_categoria, tc.videos_vistos, tc.porcentaje_vistos
             ),
-            enlaces_disponibles AS (
-                SELECT DISTINCT ON (v.id_video)
-                    v.id_video,
-                    v.enlace_video  -- Cambiamos de enlace_imagen a enlace_video
-                FROM videos v
-                WHERE v.enlace_video IS NOT NULL  -- Aseguramos que el campo es enlace_video
-                ORDER BY v.id_video
-            ),
-            enlaces_usados AS (
+            videos_no_vistos AS (
                 SELECT
-                    ed.enlace_video,  -- Cambiamos de enlace_imagen a enlace_video
-                    ed.id_video
-                FROM enlaces_disponibles ed
-                WHERE ed.id_video IN (SELECT unnest(videos_no_vistos) FROM categorias_agrupadas)
-            ),
-            enlaces_prioritarios AS (
-                SELECT
-                    v.id_video,
-                    v.enlace_video  -- Cambiamos de enlace_imagen a enlace_video
-                FROM videos v
-                WHERE v.enlace_video IS NOT NULL  -- Aseguramos que el campo es enlace_video
-                ORDER BY v.id_video
+                    vc.id_categoria,
+                    COALESCE(ARRAY_REMOVE(ARRAY_AGG(v.enlace_video ORDER BY v.id_video), NULL), ARRAY[]::text[]) AS videos_no_vistos
+                FROM video_categoria vc
+                JOIN videos v ON vc.id_video = v.id_video
+                LEFT JOIN historial h ON vc.id_video = h.id_video AND h.email = 'usuario1@email.com'
+                GROUP BY vc.id_categoria
             ),
             enlaces_categoria AS (
                 SELECT
                     vc.id_categoria,
                     vc.id_video,
-                    v.enlace_video  -- Cambiamos de enlace_imagen a enlace_video
+                    v.enlace_imagen
                 FROM video_categoria vc
                 JOIN videos v ON vc.id_video = v.id_video
-                WHERE v.enlace_video IS NOT NULL  -- Aseguramos que el campo es enlace_video
+                WHERE v.enlace_imagen IS NOT NULL
+            ),
+            enlaces_disponibles AS (
+                SELECT DISTINCT ON (ec.id_categoria) ec.id_categoria, ec.enlace_imagen
+                FROM enlaces_categoria ec
+                ORDER BY ec.id_categoria, ec.enlace_imagen
+            ),
+            enlaces_filtrados AS (
+                SELECT
+                    ed.id_categoria,
+                    ed.enlace_imagen
+                FROM enlaces_disponibles ed
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM enlaces_disponibles ed2
+                    WHERE ed2.enlace_imagen = ed.enlace_imagen
+                    AND ed2.id_categoria < ed.id_categoria
+                )
+            ),
+            categorias_con_imagen AS (
+                SELECT
+                    ca.id_categorias,
+                    ca.nombre_categoria,
+                    ca.porcentaje_vistos,
+                    ef.enlace_imagen,
+                    COALESCE(ARRAY_AGG(DISTINCT vnv.videos_no_vistos) FILTER (WHERE vnv.videos_no_vistos IS NOT NULL), '{}'::text[]) AS videos_no_vistos
+                FROM categorias_agrupadas ca
+                JOIN enlaces_filtrados ef ON ef.id_categoria = ANY(ca.id_categorias)
+                LEFT JOIN videos_no_vistos vnv ON vnv.id_categoria = ANY(ca.id_categorias)
+                GROUP BY ca.id_categorias, ca.nombre_categoria, ca.porcentaje_vistos, ef.enlace_imagen
+                ORDER BY ca.porcentaje_vistos DESC
             )
-            SELECT
-                ca.id_categorias[1] AS id_categoria,
-                ca.nombre_categoria,
-                ca.porcentaje_vistos,
-                ARRAY(
-                    SELECT v.enlace_video  -- Cambiamos de enlace_imagen a enlace_video
-                    FROM videos v
-                    WHERE v.id_video = ANY(ca.videos_no_vistos)
-                ) AS enlaces_video_no_vistos,  -- Aquí también cambiamos para devolver enlaces_video
-                COALESCE(
-                    (SELECT ec.enlace_video  -- Cambiamos de enlace_imagen a enlace_video
-                     FROM enlaces_categoria ec
-                     WHERE ec.id_categoria = ca.id_categorias[1]
-                     AND ec.id_video = ANY(ca.videos_no_vistos)
-                     LIMIT 1),
-                    (SELECT ep.enlace_video  -- Cambiamos de enlace_imagen a enlace_video
-                     FROM enlaces_prioritarios ep
-                     LIMIT 1)
-                ) AS enlace_video
-            FROM categorias_agrupadas ca
-            ORDER BY ca.porcentaje_vistos DESC
+            SELECT *
+            FROM categorias_con_imagen
             LIMIT 5;
+            
         """, nativeQuery = true)
     List<Reporte> obtenerReporte(@Param("email") String email);
 
